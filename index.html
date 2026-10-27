@@ -98,6 +98,11 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
 .photo-row{display:flex;gap:12px;align-items:center}
 .prev{width:84px;height:112px;border-radius:10px;background:var(--tint);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center}
 .prev img{width:100%;height:100%;object-fit:cover}
+.xchips{display:flex;flex-wrap:wrap;gap:8px}
+.xchip{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:5px 14px;cursor:pointer}
+.xchip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.extras{margin-top:4px;font-size:14px}
+.extras b{color:var(--ink)}
 #formMsg{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--warn-bg);color:var(--warn-ink);font-weight:700}
 .form-acts{display:flex;gap:8px;margin-top:14px}
 #toast{position:fixed;bottom:18px;inset-inline:16px;margin:auto;max-width:420px;background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:10px;z-index:20;text-align:center}
@@ -160,8 +165,11 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     .replace(/\s+/g, ' ').trim();
 
   const LABEL = { free: 'متاح', rented: 'مؤجَّر', late: 'متأخر' };
-  let db = { dresses: [], rentals: [] };
-  let filter = 'all', view = null, ack = false, photoData = '';
+  const DEFAULT_EXTRAS = ['باقة ورود', 'تاج', 'طرحة', 'حذاء', 'مجوهرات', 'أكسسوارات'];
+  let db = { dresses: [], rentals: [], extras: [...DEFAULT_EXTRAS] };
+  let filter = 'all', view = null, ack = false, photoData = '', extrasSel = [];
+  const xchipsHtml = () => [...new Set([...db.extras, ...extrasSel])]
+    .map(x => `<button type="button" class="xchip" data-act="toggleX" data-x="${esc(x)}" aria-pressed="${extrasSel.includes(x)}">${esc(x)}</button>`).join('');
 
   // ---------- التخزين ----------
   const hasStore = typeof window.storage !== 'undefined';
@@ -206,7 +214,8 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
       bar = `<div class="meter ${st}"><i style="width:${Math.round(done / total * 100)}%"></i></div>`;
     }
     return `<div class="rent">${cap ? `<span class="cap">${cap}</span>` : ''}<div class="who">${esc(r.customer)}</div>
-      <div class="when">من ${fmt(r.start)} إلى ${fmt(r.end)}، ${daysWord(total)}</div>${bar}<div class="note ${st}">${note}</div></div>`;
+      <div class="when">من ${fmt(r.start)} إلى ${fmt(r.end)}، ${daysWord(total)}</div>
+      ${r.extras && r.extras.length ? `<div class="extras"><b>مع الفستان:</b> ${r.extras.map(esc).join('، ')}</div>` : ''}${bar}<div class="note ${st}">${note}</div></div>`;
   }
   function rentMoney(r) {
     if (!(r.price > 0)) return '';
@@ -316,6 +325,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
   function rformHtml() {
     const d = db.dresses.find(x => x.id === view.dressId);
     const r = view.id ? db.rentals.find(x => x.id === view.id) : { start: today(), price: d.price || '' };
+    extrasSel = [...(r.extras || [])];
     return `<button class="btn" data-act="back">رجوع</button>
       <h2 style="margin:14px 0 2px">${view.id ? 'تعديل الكراء' : 'كراء جديد'}</h2>
       <p class="meta">${esc(d.name)}</p>
@@ -326,6 +336,9 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
         <div><label for="rEnd">يوم الإرجاع</label><input class="in" id="rEnd" type="date" value="${esc(r.end)}"></div>
         <div><label for="rPrice">سعر الكراء (دج)</label><input class="in" id="rPrice" type="number" inputmode="numeric" min="0" value="${r.price || ''}"></div>
         <div><label for="rDeposit">العربون (دج)</label><input class="in" id="rDeposit" type="number" inputmode="numeric" min="0" value="${r.deposit || ''}"></div>
+        <div class="full"><label>المستلزمات المرفقة مع الفستان</label>
+          <div class="xchips" id="xchips">${xchipsHtml()}</div>
+          <div class="photo-row" style="margin-top:10px"><input class="in" id="xNew" placeholder="مستلزم آخر، مثل: وشاح" autocomplete="off"><button class="btn" data-act="addX">إضافة</button></div></div>
         <div class="full"><label for="rNote">ملاحظة</label><textarea class="in" id="rNote">${esc(r.note)}</textarea></div>
       </div>
       <p id="formMsg" role="alert" hidden></p>
@@ -361,7 +374,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
 
   async function saveRental() {
     const o = { customer: val('#rCustomer'), phone: val('#rPhone'), start: $('#rStart').value, end: $('#rEnd').value,
-      price: Number($('#rPrice').value) || 0, deposit: Number($('#rDeposit').value) || 0, note: val('#rNote') };
+      price: Number($('#rPrice').value) || 0, deposit: Number($('#rDeposit').value) || 0, note: val('#rNote'), extras: [...extrasSel] };
     if (!o.customer) return showMsg('اكتب اسم الزبون.');
     if (!o.start || !o.end) return showMsg('اختر يوم الاستلام ويوم الإرجاع.');
     if (o.end < o.start) return showMsg('يوم الإرجاع يجب أن يكون بعد يوم الاستلام أو يساويه.');
@@ -442,6 +455,12 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     if (act === 'editDress') { view = { t: 'dform', id: view.id }; return renderSheet(); }
     if (act === 'pickPhoto') return $('#dPhotoFile').click();
     if (act === 'rmPhoto') { photoData = ''; $('#prev').textContent = 'بلا صورة'; return; }
+    if (act === 'toggleX') {
+      const x = b.dataset.x;
+      extrasSel = extrasSel.includes(x) ? extrasSel.filter(s => s !== x) : [...extrasSel, x];
+      $('#xchips').innerHTML = xchipsHtml(); return;
+    }
+    if (act === 'addX') return addExtra();
     if (act === 'saveDress') return saveDress();
     if (act === 'saveRental') return saveRental();
     if (act === 'ret' || act === 'unret') {
@@ -453,6 +472,19 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
       db.dresses = db.dresses.filter(d => d.id !== did); db.rentals = db.rentals.filter(r => r.dressId !== did);
       await persist(); view = null; refresh();
     });
+  });
+
+  function addExtra() {
+    const inp = $('#xNew'), v = inp.value.trim();
+    if (!v) return;
+    if (!db.extras.includes(v)) db.extras.push(v);
+    if (!extrasSel.includes(v)) extrasSel.push(v);
+    inp.value = '';
+    $('#xchips').innerHTML = xchipsHtml();
+    persist();
+  }
+  $('#sheet').addEventListener('keydown', e => {
+    if (e.target.id === 'xNew' && e.key === 'Enter') { e.preventDefault(); addExtra(); }
   });
 
   $('#export').addEventListener('click', () => {
@@ -474,6 +506,8 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
         if (!data.dresses.every(d => d.id && d.name)) throw 0;
         if (!data.rentals.every(x => x.id && x.dressId && x.customer && okDate(x.start) && okDate(x.end))) throw 0;
         data.dresses.forEach(d => { if (!(typeof d.photo === 'string' && d.photo.startsWith('data:image/'))) d.photo = ''; });
+        data.rentals.forEach(x => { x.extras = Array.isArray(x.extras) ? x.extras.filter(s => typeof s === 'string') : []; });
+        data.extras = Array.isArray(data.extras) ? data.extras.filter(s => typeof s === 'string') : [...DEFAULT_EXTRAS];
         db = data; await persist(); view = null; refresh();
         toast('تم استرجاع النسخة.');
       } catch (_) { toast('الملف غير صالح.'); }
@@ -487,12 +521,12 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     const a = mk('ملكي عاجي', '01', 'عاجي', '40', 45000), b = mk('دانتيل وردي', '02', 'وردي', '38', 38000),
       c = mk('سيرين أزرق', '03', 'أزرق', '42', 30000), d = mk('أميرة بيضاء', '04', 'أبيض', '40', 50000),
       e = mk('ساتان كلاسيك', '05', 'شمباني', '44', 35000), f = mk('سهرة أحمر', '06', 'أحمر', '38', 28000);
-    const r = (dr, customer, phone, s, en, price, dep, returned = false) =>
-      ({ id: uid(), dressId: dr.id, customer, phone, start: addDays(t, s), end: addDays(t, en), price, deposit: dep, note: '', returned, demo: true });
-    return { dresses: [a, b, c, d, e, f], rentals: [
-      r(a, 'سميرة بن عيسى', '0555 12 34 56', -1, 2, 45000, 15000),
-      r(a, 'ليلى قاسمي', '0550 00 11 22', 8, 11, 45000, 10000),
-      r(b, 'نور الهدى مرزوق', '0661 98 76 54', 6, 9, 38000, 10000),
+    const r = (dr, customer, phone, s, en, price, dep, returned = false, extras = []) =>
+      ({ id: uid(), dressId: dr.id, customer, phone, start: addDays(t, s), end: addDays(t, en), price, deposit: dep, note: '', returned, extras, demo: true });
+    return { extras: [...DEFAULT_EXTRAS], dresses: [a, b, c, d, e, f], rentals: [
+      r(a, 'سميرة بن عيسى', '0555 12 34 56', -1, 2, 45000, 15000, false, ['باقة ورود', 'تاج']),
+      r(a, 'ليلى قاسمي', '0550 00 11 22', 8, 11, 45000, 10000, false, ['طرحة']),
+      r(b, 'نور الهدى مرزوق', '0661 98 76 54', 6, 9, 38000, 10000, false, ['باقة ورود', 'مجوهرات']),
       r(c, 'أمينة بوزيد', '0770 11 22 33', -6, -3, 30000, 30000),
       r(d, 'وفاء شريف', '0560 44 55 66', -20, -17, 50000, 50000, true)
     ] };
@@ -500,7 +534,10 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
 
   (async () => {
     const saved = await load();
-    if (saved && Array.isArray(saved.dresses) && Array.isArray(saved.rentals)) db = saved;
+    if (saved && Array.isArray(saved.dresses) && Array.isArray(saved.rentals)) {
+      db = saved;
+      if (!Array.isArray(db.extras)) db.extras = [...DEFAULT_EXTRAS];
+    }
     else { db = demo(); await persist(); }
     $('#storageHint').hidden = hasStore;
     render();
