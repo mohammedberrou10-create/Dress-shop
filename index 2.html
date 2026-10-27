@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فساتين المحل</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --paper:#F3F1F6; --card:#FFFFFF; --ink:#2A1A2D; --muted:#6D6475; --line:#DDD7E2;
+  --accent:#8E2F5A; --accent-ink:#FFFFFF; --field:#FFFFFF; --tint:#E9E2EE;
+  --free:#23704F; --rented:#4B3F86; --late:#B3261E;
+  --warn-bg:#FFF3D6; --warn-ink:#6B4A00;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#17111A; --card:#221A26; --ink:#F1EAF3; --muted:#B0A5B8; --line:#3A2F40;
+    --accent:#E07AA6; --accent-ink:#2A1020; --field:#1C1520; --tint:#2E2434;
+    --free:#6FD1A2; --rented:#B3A7F0; --late:#FF8A80;
+    --warn-bg:#3A2E10; --warn-ink:#F3D58A;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Noto Naskh Arabic","Geeza Pro","Segoe UI",Tahoma,sans-serif;font-size:16px;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:30px;font-weight:800;margin:0}
+.sub{color:var(--muted);margin:0 0 16px}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none !important}
+
+.btn{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn.link{border:none;background:none;color:var(--muted);text-decoration:underline;padding:4px 6px}
+.btn.danger{color:var(--late)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+
+#q{width:100%;height:54px;padding:0 16px;font-size:19px;background:var(--field);border:2px solid var(--ink);border-radius:14px}
+#q::placeholder{color:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:5px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip b{margin-inline-start:4px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
+.dcard.late{border-color:var(--late)}
+.ph{position:relative;aspect-ratio:3/4;background:var(--tint);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .ini{font-size:56px;font-weight:800;color:var(--muted);opacity:.5}
+.ph .pill{position:absolute;top:8px;inset-inline-start:8px;background:var(--card)}
+.pill{font-size:14px;font-weight:700;padding:1px 12px;border-radius:99px;border:1.5px solid currentColor;white-space:nowrap;display:inline-block}
+.pill.free{color:var(--free)} .pill.rented{color:var(--rented)} .pill.late{color:var(--late)}
+.dbody{padding:10px 12px 12px;flex:1}
+.dname{font-weight:800;font-size:17px;line-height:1.3;margin-bottom:4px}
+
+.rent{font-size:14px}
+.rent .cap{display:block;color:var(--muted);font-size:13px}
+.rent .who{font-weight:700;font-size:15px}
+.rent .when{color:var(--muted)}
+.meter{height:6px;border-radius:99px;background:var(--tint);margin:6px 0;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--rented)}
+.meter.late i{background:var(--late)}
+.note{font-weight:700;margin:2px 0 0}
+.note.free,.note.done{color:var(--free)} .note.current{color:var(--rented)} .note.upcoming{color:var(--muted)} .note.late{color:var(--late)}
+.note.done{color:var(--muted)}
+
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center;color:var(--muted)}
+.empty p{margin:0 0 12px}
+.demo{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px}
+.demo .btn{background:transparent;color:inherit;border-color:currentColor}
+.foot{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+.foot .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+
+/* الشاشة التفصيلية */
+#sheet{position:fixed;inset:0;background:var(--paper);overflow:auto;z-index:10}
+.sheet-in{max-width:640px;margin:0 auto;padding:16px 16px 56px}
+.hero{border-radius:14px;overflow:hidden;background:var(--tint);margin:12px 0;display:flex;align-items:center;justify-content:center;max-height:440px}
+.hero img{width:100%;max-height:440px;object-fit:cover;display:block}
+.hero .ini{font-size:80px;font-weight:800;color:var(--muted);opacity:.5;padding:60px 0}
+.sheet-in h2{font-size:26px;margin:0}
+.meta{color:var(--muted);margin:2px 0 14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.panel .rent{font-size:16px;margin:8px 0}
+.panel .rent .who{font-size:19px}
+h3{font-size:17px;margin:22px 0 10px}
+.hist{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.hist .rent{font-size:15px}
+.money{color:var(--muted);font-size:15px;margin:4px 0 0}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.acts .btn{padding:6px 12px;font-size:15px}
+.gridf{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:3px}
+.in{width:100%;height:46px;padding:0 12px;background:var(--field);border:1.5px solid var(--line);border-radius:10px}
+textarea.in{height:68px;padding:8px 12px;resize:vertical}
+.photo-row{display:flex;gap:12px;align-items:center}
+.prev{width:84px;height:112px;border-radius:10px;background:var(--tint);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center}
+.prev img{width:100%;height:100%;object-fit:cover}
+#formMsg{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--warn-bg);color:var(--warn-ink);font-weight:700}
+.form-acts{display:flex;gap:8px;margin-top:14px}
+#toast{position:fixed;bottom:18px;inset-inline:16px;margin:auto;max-width:420px;background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:10px;z-index:20;text-align:center}
+@media (max-width:420px){.gridf{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>فساتين المحل</h1>
+      <p class="sub" id="todayLine"></p>
+    </div>
+    <button class="btn primary" id="addDress">فستان جديد</button>
+  </div>
+
+  <div id="demoBanner" class="demo" hidden>
+    <span>هذه بيانات تجريبية للعرض فقط.</span>
+    <button class="btn" id="clearDemo">ابدأ بسجل فارغ</button>
+  </div>
+
+  <input id="q" type="search" placeholder="ابحث باسم الفستان أو اسم الزبون" autocomplete="off" aria-label="بحث">
+  <div class="chips" id="chips"></div>
+  <div id="list"></div>
+
+  <div class="foot">
+    <div class="row">
+      <button class="btn" id="export">حفظ نسخة احتياطية</button>
+      <button class="btn" id="importBtn">استرجاع نسخة</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <div id="storageHint" hidden>البيانات هنا محفوظة في الذاكرة المؤقتة للصفحة فقط. احفظ نسخة احتياطية قبل الإغلاق.</div>
+  </div>
+</div>
+
+<div id="sheet" hidden><div class="sheet-in" id="sheetBody"></div></div>
+<datalist id="customersList"></datalist>
+<div id="toast" hidden></div>
+<input type="file" id="dPhotoFile" accept="image/*" hidden>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const MONTHS = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const pad = n => String(n).padStart(2, '0');
+  const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const today = () => iso(new Date());
+  const toDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const dayDiff = (a, b) => Math.round((toDate(b) - toDate(a)) / 864e5);
+  const addDays = (s, n) => { const d = toDate(s); d.setDate(d.getDate() + n); return iso(d); };
+  const fmt = s => { const d = toDate(s); return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; };
+  const money = n => String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const daysWord = n => n === 1 ? 'يوم واحد' : n === 2 ? 'يومان' : n <= 10 ? `${n} أيام` : `${n} يومًا`;
+  const norm = s => (s || '').toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/\s+/g, ' ').trim();
+
+  const LABEL = { free: 'متاح', rented: 'مؤجَّر', late: 'متأخر' };
+  let db = { dresses: [], rentals: [] };
+  let filter = 'all', view = null, ack = false, photoData = '';
+
+  // ---------- التخزين ----------
+  const hasStore = typeof window.storage !== 'undefined';
+  async function load() { try { const r = await window.storage.get('shop'); return JSON.parse(r.value); } catch (e) { return null; } }
+  async function persist() {
+    try { await window.storage.set('shop', JSON.stringify(db)); }
+    catch (e) { if (hasStore) toast('تعذّر الحفظ. احفظ نسخة احتياطية الآن.'); }
+  }
+  let toastTimer;
+  function toast(t) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 3500); }
+
+  // ---------- المنطق ----------
+  function rentalState(r) {
+    if (r.returned) return 'done';
+    const t = today();
+    if (t < r.start) return 'upcoming';
+    if (t <= r.end) return 'current';
+    return 'late';
+  }
+  function dressInfo(d) {
+    const rs = db.rentals.filter(r => r.dressId === d.id);
+    const open = rs.filter(r => !r.returned).sort((a, b) => a.start.localeCompare(b.start));
+    const active = open.find(r => rentalState(r) === 'late') || open.find(r => rentalState(r) === 'current');
+    const next = open.find(r => rentalState(r) === 'upcoming');
+    const key = active ? (rentalState(active) === 'late' ? 'late' : 'rented') : 'free';
+    return { rs, active, next, key };
+  }
+  const RANK = { late: 0, rented: 1, free: 2 };
+  const PR = { late: 0, current: 1, upcoming: 2, done: 3 };
+
+  function rentBlock(r, cap) {
+    const st = rentalState(r), t = today();
+    let note;
+    if (st === 'done') note = 'تم الإرجاع';
+    else if (st === 'upcoming') { const n = dayDiff(t, r.start); note = n === 1 ? 'يبدأ غدًا' : `يبدأ بعد ${daysWord(n)}`; }
+    else if (st === 'current') { const n = dayDiff(t, r.end); note = n === 0 ? 'الإرجاع اليوم' : `يتبقى ${daysWord(n)} للإرجاع`; }
+    else note = `تأخر الإرجاع ${daysWord(dayDiff(r.end, t))}`;
+    const total = dayDiff(r.start, r.end) + 1;
+    let bar = '';
+    if (st === 'current' || st === 'late') {
+      const done = st === 'late' ? total : Math.min(total, dayDiff(r.start, t) + 1);
+      bar = `<div class="meter ${st}"><i style="width:${Math.round(done / total * 100)}%"></i></div>`;
+    }
+    return `<div class="rent">${cap ? `<span class="cap">${cap}</span>` : ''}<div class="who">${esc(r.customer)}</div>
+      <div class="when">من ${fmt(r.start)} إلى ${fmt(r.end)}، ${daysWord(total)}</div>${bar}<div class="note ${st}">${note}</div></div>`;
+  }
+  function rentMoney(r) {
+    if (!(r.price > 0)) return '';
+    const rem = r.price - (r.deposit || 0);
+    return `<p class="money">السعر ${money(r.price)} دج، العربون ${money(r.deposit)} دج، ${rem > 0 ? `المتبقي ${money(rem)} دج` : 'مدفوع بالكامل'}</p>`;
+  }
+  const photoHtml = d => d.photo ? `<img src="${d.photo}" alt="${esc(d.name)}">` : `<span class="ini">${esc([...d.name][0] || '؟')}</span>`;
+
+  function focusRental(i, q) {
+    if (q) {
+      const m = i.rs.filter(r => norm(r.customer).includes(q) || norm(r.phone).includes(q));
+      if (m.length) { m.sort((a, b) => PR[rentalState(a)] - PR[rentalState(b)] || b.start.localeCompare(a.start)); return { r: m[0], cap: '' }; }
+    }
+    if (i.active) return { r: i.active, cap: '' };
+    if (i.next) return { r: i.next, cap: 'حجز قادم' };
+    return null;
+  }
+
+  // ---------- الواجهة الرئيسية ----------
+  function render() {
+    $('#todayLine').textContent = `اليوم ${fmt(today())}`;
+    const q = norm($('#q').value);
+    const all = db.dresses.map(d => ({ d, i: dressInfo(d) }));
+    const counts = { all: all.length, free: 0, rented: 0, late: 0 };
+    all.forEach(x => counts[x.i.key]++);
+    $('#chips').innerHTML = [['all', 'الكل'], ['free', 'متاح'], ['rented', 'مؤجَّر'], ['late', 'متأخر']]
+      .map(([k, l]) => `<button class="chip" data-f="${k}" aria-pressed="${filter === k}">${l}<b>${counts[k]}</b></button>`).join('');
+
+    let list = all.filter(({ d, i }) => {
+      if (filter !== 'all' && i.key !== filter) return false;
+      if (!q) return true;
+      const hay = [d.name, d.code, d.color].map(norm).join(' ');
+      return hay.includes(q) || i.rs.some(r => norm(r.customer).includes(q) || norm(r.phone).includes(q));
+    });
+    list.sort((a, b) => RANK[a.i.key] - RANK[b.i.key] || a.d.name.localeCompare(b.d.name, 'ar'));
+
+    if (!db.dresses.length) {
+      $('#list').innerHTML = `<div class="empty"><p>لا توجد فساتين بعد.</p><button class="btn primary" data-act="addFirst">أضف أول فستان</button></div>`;
+    } else if (!list.length) {
+      $('#list').innerHTML = `<div class="empty"><p>لا توجد نتائج مطابقة.</p></div>`;
+    } else {
+      $('#list').innerHTML = `<div class="grid">${list.map(({ d, i }) => {
+        const f = focusRental(i, q);
+        const body = f ? rentBlock(f.r, f.cap) : `<div class="note free">جاهز للكراء</div>`;
+        return `<article class="dcard ${i.key}" tabindex="0" role="button" data-id="${d.id}" aria-label="${esc(d.name)}">
+          <div class="ph">${photoHtml(d)}<span class="pill ${i.key}">${LABEL[i.key]}</span></div>
+          <div class="dbody"><div class="dname">${esc(d.name)}</div>${body}</div></article>`;
+      }).join('')}</div>`;
+    }
+    $('#customersList').innerHTML = [...new Set(db.rentals.map(r => r.customer))].map(v => `<option value="${esc(v)}">`).join('');
+    $('#demoBanner').hidden = !(db.dresses.some(d => d.demo));
+  }
+
+  // ---------- الشاشة التفصيلية ----------
+  function detailHtml() {
+    const d = db.dresses.find(x => x.id === view.id);
+    const i = dressInfo(d);
+    const meta = [d.code && `الرمز ${esc(d.code)}`, d.color && `اللون ${esc(d.color)}`, d.size && `المقاس ${esc(d.size)}`,
+      d.price > 0 && `السعر المعتاد ${money(d.price)} دج`].filter(Boolean).join('، ');
+    let st;
+    if (i.active) {
+      st = `<div class="panel"><span class="pill ${i.key}">${LABEL[i.key]}</span>${rentBlock(i.active)}${rentMoney(i.active)}
+        <div class="acts"><button class="btn primary" data-act="ret" data-id="${i.active.id}">تم إرجاع الفستان</button></div></div>`;
+    } else {
+      st = `<div class="panel"><span class="pill free">متاح</span><p class="note free">الفستان متاح الآن للكراء.</p></div>`;
+    }
+    if (i.next) st += `<div class="panel">${rentBlock(i.next, 'الحجز القادم')}${rentMoney(i.next)}</div>`;
+    const hist = [...i.rs].sort((a, b) => b.start.localeCompare(a.start)).map(r => `<div class="hist">${rentBlock(r)}${rentMoney(r)}${r.note ? `<p class="money">${esc(r.note)}</p>` : ''}
+      <div class="acts">
+        ${r.returned ? `<button class="btn" data-act="unret" data-id="${r.id}">إلغاء الإرجاع</button>` : `<button class="btn" data-act="ret" data-id="${r.id}">تم الإرجاع</button>`}
+        <button class="btn" data-act="editRental" data-id="${r.id}">تعديل</button>
+        <button class="btn danger" data-act="delRental" data-id="${r.id}">حذف</button></div></div>`).join('');
+    return `<button class="btn" data-act="close">رجوع</button>
+      <div class="hero">${photoHtml(d)}</div>
+      <h2>${esc(d.name)}</h2>
+      <p class="meta">${meta || ' '}</p>
+      ${st}
+      <button class="btn primary" data-act="newRental" style="width:100%;height:48px">كراء جديد</button>
+      <h3>سجل الكراء</h3>
+      ${hist || '<div class="empty"><p>لا يوجد كراء مسجل لهذا الفستان.</p></div>'}
+      ${d.note ? `<h3>ملاحظة</h3><p>${esc(d.note)}</p>` : ''}
+      <div class="acts" style="margin-top:22px">
+        <button class="btn" data-act="editDress">تعديل الفستان</button>
+        <button class="btn danger" data-act="delDress">حذف الفستان</button></div>`;
+  }
+
+  function dformHtml() {
+    const d = view.id ? db.dresses.find(x => x.id === view.id) : {};
+    photoData = d.photo || '';
+    return `<button class="btn" data-act="back">رجوع</button>
+      <h2 style="margin:14px 0">${view.id ? 'تعديل الفستان' : 'فستان جديد'}</h2>
+      <div class="gridf">
+        <div class="full"><label for="dName">اسم الفستان</label><input class="in" id="dName" value="${esc(d.name)}"></div>
+        <div><label for="dCode">الرمز أو الرقم</label><input class="in" id="dCode" value="${esc(d.code)}"></div>
+        <div><label for="dColor">اللون</label><input class="in" id="dColor" value="${esc(d.color)}"></div>
+        <div><label for="dSize">المقاس</label><input class="in" id="dSize" value="${esc(d.size)}"></div>
+        <div><label for="dPrice">سعر الكراء المعتاد (دج)</label><input class="in" id="dPrice" type="number" inputmode="numeric" min="0" value="${d.price || ''}"></div>
+        <div class="full"><label>الصورة</label>
+          <div class="photo-row"><div class="prev" id="prev">${photoData ? `<img src="${photoData}" alt="">` : 'بلا صورة'}</div>
+            <div><button class="btn" data-act="pickPhoto">اختيار صورة</button> <button class="btn link" data-act="rmPhoto">إزالة</button></div></div></div>
+        <div class="full"><label for="dNote">ملاحظة</label><textarea class="in" id="dNote">${esc(d.note)}</textarea></div>
+      </div>
+      <p id="formMsg" role="alert" hidden></p>
+      <div class="form-acts"><button class="btn primary" data-act="saveDress">حفظ الفستان</button><button class="btn" data-act="back">إلغاء</button></div>`;
+  }
+
+  function rformHtml() {
+    const d = db.dresses.find(x => x.id === view.dressId);
+    const r = view.id ? db.rentals.find(x => x.id === view.id) : { start: today(), price: d.price || '' };
+    return `<button class="btn" data-act="back">رجوع</button>
+      <h2 style="margin:14px 0 2px">${view.id ? 'تعديل الكراء' : 'كراء جديد'}</h2>
+      <p class="meta">${esc(d.name)}</p>
+      <div class="gridf">
+        <div class="full"><label for="rCustomer">اسم الزبون</label><input class="in" id="rCustomer" list="customersList" autocomplete="off" value="${esc(r.customer)}"></div>
+        <div class="full"><label for="rPhone">الهاتف</label><input class="in" id="rPhone" type="tel" inputmode="tel" dir="ltr" style="text-align:right" value="${esc(r.phone)}"></div>
+        <div><label for="rStart">يوم الاستلام</label><input class="in" id="rStart" type="date" value="${esc(r.start)}"></div>
+        <div><label for="rEnd">يوم الإرجاع</label><input class="in" id="rEnd" type="date" value="${esc(r.end)}"></div>
+        <div><label for="rPrice">سعر الكراء (دج)</label><input class="in" id="rPrice" type="number" inputmode="numeric" min="0" value="${r.price || ''}"></div>
+        <div><label for="rDeposit">العربون (دج)</label><input class="in" id="rDeposit" type="number" inputmode="numeric" min="0" value="${r.deposit || ''}"></div>
+        <div class="full"><label for="rNote">ملاحظة</label><textarea class="in" id="rNote">${esc(r.note)}</textarea></div>
+      </div>
+      <p id="formMsg" role="alert" hidden></p>
+      <div class="form-acts"><button class="btn primary" id="saveR" data-act="saveRental">حفظ الكراء</button><button class="btn" data-act="back">إلغاء</button></div>`;
+  }
+
+  function renderSheet(keepScroll) {
+    const s = $('#sheet');
+    if (view && view.t !== 'dform' && !db.dresses.find(x => x.id === (view.dressId || view.id))) view = null;
+    if (!view) { s.hidden = true; document.body.style.overflow = ''; return; }
+    const y = s.scrollTop;
+    s.hidden = false; document.body.style.overflow = 'hidden';
+    $('#sheetBody').innerHTML = view.t === 'detail' ? detailHtml() : view.t === 'dform' ? dformHtml() : rformHtml();
+    s.scrollTop = keepScroll ? y : 0;
+    ack = false;
+  }
+  const refresh = keep => { render(); renderSheet(keep); };
+  const showMsg = t => { const m = $('#formMsg'); m.textContent = t; m.hidden = false; };
+  const val = id => $(id).value.trim();
+
+  // ---------- حفظ النماذج ----------
+  async function saveDress() {
+    const name = val('#dName');
+    if (!name) return showMsg('اكتب اسم الفستان.');
+    const o = { name, code: val('#dCode'), color: val('#dColor'), size: val('#dSize'), price: Number($('#dPrice').value) || 0, note: val('#dNote'), photo: photoData };
+    let id = view.id;
+    if (id) Object.assign(db.dresses.find(x => x.id === id), o);
+    else { id = uid(); db.dresses.push({ id, ...o }); }
+    await persist();
+    view = { t: 'detail', id };
+    refresh();
+  }
+
+  async function saveRental() {
+    const o = { customer: val('#rCustomer'), phone: val('#rPhone'), start: $('#rStart').value, end: $('#rEnd').value,
+      price: Number($('#rPrice').value) || 0, deposit: Number($('#rDeposit').value) || 0, note: val('#rNote') };
+    if (!o.customer) return showMsg('اكتب اسم الزبون.');
+    if (!o.start || !o.end) return showMsg('اختر يوم الاستلام ويوم الإرجاع.');
+    if (o.end < o.start) return showMsg('يوم الإرجاع يجب أن يكون بعد يوم الاستلام أو يساويه.');
+    const clash = db.rentals.filter(x => x.dressId === view.dressId && x.id !== view.id && !x.returned && x.start <= o.end && o.start <= x.end);
+    if (clash.length && !ack) {
+      ack = true;
+      const c = clash[0];
+      showMsg(`هذا الفستان محجوز لدى ${c.customer} من ${fmt(c.start)} إلى ${fmt(c.end)}. عدّل التواريخ أو احفظ رغم التعارض.`);
+      $('#saveR').textContent = 'حفظ رغم التعارض';
+      return;
+    }
+    if (view.id) Object.assign(db.rentals.find(x => x.id === view.id), o);
+    else db.rentals.push({ id: uid(), dressId: view.dressId, returned: false, ...o });
+    await persist();
+    view = { t: 'detail', id: view.dressId };
+    refresh();
+  }
+
+  function resizeImage(file, max = 420) {
+    return new Promise((res, rej) => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        res(c.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = rej;
+      img.src = url;
+    });
+  }
+
+  function armDelete(b, fn) {
+    if (b.dataset.armed) return fn();
+    b.dataset.armed = '1'; const old = b.textContent; b.textContent = 'تأكيد الحذف';
+    setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = old; } }, 3000);
+  }
+
+  // ---------- الأحداث ----------
+  $('#q').addEventListener('input', render);
+  $('#chips').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) { filter = b.dataset.f; render(); } });
+  $('#addDress').addEventListener('click', () => { view = { t: 'dform' }; renderSheet(); });
+  $('#list').addEventListener('click', e => {
+    if (e.target.closest('[data-act="addFirst"]')) { view = { t: 'dform' }; return renderSheet(); }
+    const c = e.target.closest('.dcard'); if (c) { view = { t: 'detail', id: c.dataset.id }; renderSheet(); }
+  });
+  $('#list').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const c = e.target.closest('.dcard'); if (c) { e.preventDefault(); view = { t: 'detail', id: c.dataset.id }; renderSheet(); }
+  });
+  $('#clearDemo').addEventListener('click', async () => {
+    const ids = new Set(db.dresses.filter(d => d.demo).map(d => d.id));
+    db.dresses = db.dresses.filter(d => !ids.has(d.id));
+    db.rentals = db.rentals.filter(r => !ids.has(r.dressId));
+    await persist(); render();
+  });
+
+  $('#sheet').addEventListener('input', () => { if (ack) { ack = false; const b = $('#saveR'); if (b) b.textContent = 'حفظ الكراء'; $('#formMsg').hidden = true; } });
+  $('#dPhotoFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try { photoData = await resizeImage(f); const p = $('#prev'); if (p) p.innerHTML = `<img src="${photoData}" alt="">`; }
+    catch (_) { toast('تعذّر قراءة الصورة.'); }
+  });
+
+  $('#sheet').addEventListener('click', async e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act, id = b.dataset.id;
+    if (act === 'close') { view = null; return renderSheet(); }
+    if (act === 'back') {
+      const did = view.t === 'rform' ? view.dressId : view.id;
+      view = did ? { t: 'detail', id: did } : null; return renderSheet();
+    }
+    if (act === 'newRental') { view = { t: 'rform', dressId: view.id }; return renderSheet(); }
+    if (act === 'editRental') { view = { t: 'rform', dressId: view.id, id }; return renderSheet(); }
+    if (act === 'editDress') { view = { t: 'dform', id: view.id }; return renderSheet(); }
+    if (act === 'pickPhoto') return $('#dPhotoFile').click();
+    if (act === 'rmPhoto') { photoData = ''; $('#prev').textContent = 'بلا صورة'; return; }
+    if (act === 'saveDress') return saveDress();
+    if (act === 'saveRental') return saveRental();
+    if (act === 'ret' || act === 'unret') {
+      db.rentals.find(r => r.id === id).returned = act === 'ret'; await persist(); return refresh(true);
+    }
+    if (act === 'delRental') return armDelete(b, async () => { db.rentals = db.rentals.filter(r => r.id !== id); await persist(); refresh(true); });
+    if (act === 'delDress') return armDelete(b, async () => {
+      const did = view.id;
+      db.dresses = db.dresses.filter(d => d.id !== did); db.rentals = db.rentals.filter(r => r.dressId !== did);
+      await persist(); view = null; refresh();
+    });
+  });
+
+  $('#export').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(db)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `dresses-backup-${today()}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', e => {
+    const file = e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = async () => {
+      try {
+        const data = JSON.parse(r.result);
+        const okDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+        if (!Array.isArray(data.dresses) || !Array.isArray(data.rentals)) throw 0;
+        if (!data.dresses.every(d => d.id && d.name)) throw 0;
+        if (!data.rentals.every(x => x.id && x.dressId && x.customer && okDate(x.start) && okDate(x.end))) throw 0;
+        data.dresses.forEach(d => { if (!(typeof d.photo === 'string' && d.photo.startsWith('data:image/'))) d.photo = ''; });
+        db = data; await persist(); view = null; refresh();
+        toast('تم استرجاع النسخة.');
+      } catch (_) { toast('الملف غير صالح.'); }
+    };
+    r.readAsText(file);
+  });
+
+  function demo() {
+    const t = today();
+    const mk = (name, code, color, size, price) => ({ id: uid(), name, code, color, size, price, note: '', photo: '', demo: true });
+    const a = mk('ملكي عاجي', '01', 'عاجي', '40', 45000), b = mk('دانتيل وردي', '02', 'وردي', '38', 38000),
+      c = mk('سيرين أزرق', '03', 'أزرق', '42', 30000), d = mk('أميرة بيضاء', '04', 'أبيض', '40', 50000),
+      e = mk('ساتان كلاسيك', '05', 'شمباني', '44', 35000), f = mk('سهرة أحمر', '06', 'أحمر', '38', 28000);
+    const r = (dr, customer, phone, s, en, price, dep, returned = false) =>
+      ({ id: uid(), dressId: dr.id, customer, phone, start: addDays(t, s), end: addDays(t, en), price, deposit: dep, note: '', returned, demo: true });
+    return { dresses: [a, b, c, d, e, f], rentals: [
+      r(a, 'سميرة بن عيسى', '0555 12 34 56', -1, 2, 45000, 15000),
+      r(a, 'ليلى قاسمي', '0550 00 11 22', 8, 11, 45000, 10000),
+      r(b, 'نور الهدى مرزوق', '0661 98 76 54', 6, 9, 38000, 10000),
+      r(c, 'أمينة بوزيد', '0770 11 22 33', -6, -3, 30000, 30000),
+      r(d, 'وفاء شريف', '0560 44 55 66', -20, -17, 50000, 50000, true)
+    ] };
+  }
+
+  (async () => {
+    const saved = await load();
+    if (saved && Array.isArray(saved.dresses) && Array.isArray(saved.rentals)) db = saved;
+    else { db = demo(); await persist(); }
+    $('#storageHint').hidden = hasStore;
+    render();
+  })();
+})();
+</script>
+</body>
+</html>
