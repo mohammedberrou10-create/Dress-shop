@@ -149,6 +149,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
       <div class="row">
         <button class="btn" id="refreshBtn">تحديث</button>
         <button class="btn" id="export">نسخة احتياطية</button>
+        <button class="btn" id="pwdBtn">تغيير كلمة السر</button>
         <button class="btn" id="logout">تسجيل الخروج</button>
       </div>
       <div id="who"></div>
@@ -198,6 +199,9 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     const m = String((e && e.message) || e || '');
     if (/failed to fetch|network|load failed/i.test(m)) return 'تعذّر الاتصال بالإنترنت. حاول مرة أخرى.';
     if (/jwt|not authenticated|401/i.test(m)) return 'انتهت الجلسة. سجّل الدخول من جديد.';
+    if (/different from the old/i.test(m)) return 'اختر كلمة سر مختلفة عن الحالية.';
+    if (/weak|at least|too short/i.test(m)) return 'كلمة السر ضعيفة. اجعلها أطول وفيها أرقام وحروف.';
+    if (/reauth|recently/i.test(m)) return 'سجّل الخروج ثم ادخل من جديد، ثم غيّر كلمة السر.';
     return 'حدث خطأ: ' + m.slice(0, 90);
   }
   async function run(fn) {
@@ -390,13 +394,25 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
       <div class="form-acts"><button class="btn primary" id="saveR" data-act="saveRental">حفظ الكراء</button><button class="btn" data-act="back">إلغاء</button></div>`;
   }
 
+  function pwdHtml() {
+    return `<button class="btn" data-act="back">رجوع</button>
+      <h2 style="margin:14px 0 4px">تغيير كلمة السر</h2>
+      <p class="meta">اختر كلمة سر لا تستعملها في أي موقع آخر.</p>
+      <div class="gridf">
+        <div class="full"><label for="pNew">كلمة السر الجديدة (8 أحرف على الأقل)</label><input class="in" id="pNew" type="password" autocomplete="new-password" dir="ltr" style="text-align:right"></div>
+        <div class="full"><label for="pNew2">أعد كتابتها</label><input class="in" id="pNew2" type="password" autocomplete="new-password" dir="ltr" style="text-align:right"></div>
+      </div>
+      <p id="formMsg" role="alert" hidden></p>
+      <div class="form-acts"><button class="btn primary" data-act="savePwd">حفظ كلمة السر</button><button class="btn" data-act="back">إلغاء</button></div>`;
+  }
+
   function renderSheet(keepScroll) {
     const s = $('#sheet');
-    if (view && view.t !== 'dform' && !db.dresses.find(x => x.id === (view.dressId || view.id))) view = null;
+    if (view && view.t !== 'dform' && view.t !== 'pwd' && !db.dresses.find(x => x.id === (view.dressId || view.id))) view = null;
     if (!view) { s.hidden = true; document.body.style.overflow = ''; return; }
     const y = s.scrollTop;
     s.hidden = false; document.body.style.overflow = 'hidden';
-    $('#sheetBody').innerHTML = view.t === 'detail' ? detailHtml() : view.t === 'dform' ? dformHtml() : rformHtml();
+    $('#sheetBody').innerHTML = view.t === 'detail' ? detailHtml() : view.t === 'dform' ? dformHtml() : view.t === 'pwd' ? pwdHtml() : rformHtml();
     s.scrollTop = keepScroll ? y : 0;
     ack = false;
   }
@@ -486,6 +502,18 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     });
   }
 
+  async function savePwd() {
+    const a = $('#pNew').value, b = $('#pNew2').value;
+    if (a.length < 8) return showMsg('كلمة السر يجب أن تكون 8 أحرف على الأقل.');
+    if (a !== b) return showMsg('كلمتا السر غير متطابقتين.');
+    await run(async () => {
+      const { error } = await sb.auth.updateUser({ password: a });
+      if (error) throw error;
+      view = null; renderSheet();
+      toast('تم تغيير كلمة السر.');
+    });
+  }
+
   function addExtra() {
     const inp = $('#xNew'), v = inp.value.trim();
     if (!v) return;
@@ -550,6 +578,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
       $('#xchips').innerHTML = xchipsHtml(); return;
     }
     if (act === 'addX') return addExtra();
+    if (act === 'savePwd') return savePwd();
     if (act === 'saveDress') return saveDress();
     if (act === 'saveRental') return saveRental();
     if (act === 'ret' || act === 'unret') {
@@ -580,6 +609,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     a.href = URL.createObjectURL(blob); a.download = `dresses-backup-${today()}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
+  $('#pwdBtn').addEventListener('click', () => { view = { t: 'pwd' }; renderSheet(); });
   $('#logout').addEventListener('click', async () => { try { await sb.auth.signOut(); } catch (_) {} showLogin(); });
 
   document.addEventListener('visibilitychange', () => {
