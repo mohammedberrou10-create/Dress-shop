@@ -29,12 +29,22 @@ h1{font-size:30px;font-weight:800;margin:0}
 button,input,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 [hidden]{display:none !important}
+body.busy button{opacity:.55;pointer-events:none}
 
 .btn{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;cursor:pointer}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
 .btn.link{border:none;background:none;color:var(--muted);text-decoration:underline;padding:4px 6px}
 .btn.danger{color:var(--late)}
 .head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+
+/* الدخول */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 20px}
+.login-card h1{font-size:28px;margin-bottom:4px}
+.login-card .sub{margin-bottom:18px}
+.login-card .in{margin-bottom:12px}
+.login-card .btn{width:100%;height:48px}
+#loginMsg{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:var(--warn-bg);color:var(--warn-ink);font-weight:700}
 
 #q{width:100%;height:54px;padding:0 16px;font-size:19px;background:var(--field);border:2px solid var(--ink);border-radius:14px}
 #q::placeholder{color:var(--muted)}
@@ -63,17 +73,13 @@ button,input,textarea{font:inherit;color:inherit}
 .meter i{display:block;height:100%;background:var(--rented)}
 .meter.late i{background:var(--late)}
 .note{font-weight:700;margin:2px 0 0}
-.note.free,.note.done{color:var(--free)} .note.current{color:var(--rented)} .note.upcoming{color:var(--muted)} .note.late{color:var(--late)}
-.note.done{color:var(--muted)}
+.note.free{color:var(--free)} .note.current{color:var(--rented)} .note.upcoming{color:var(--muted)} .note.late{color:var(--late)} .note.done{color:var(--muted)}
 
 .empty{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center;color:var(--muted)}
 .empty p{margin:0 0 12px}
-.demo{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px}
-.demo .btn{background:transparent;color:inherit;border-color:currentColor}
 .foot{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
 .foot .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 
-/* الشاشة التفصيلية */
 #sheet{position:fixed;inset:0;background:var(--paper);overflow:auto;z-index:10}
 .sheet-in{max-width:640px;margin:0 auto;padding:16px 16px 56px}
 .hero{border-radius:14px;overflow:hidden;background:var(--tint);margin:12px 0;display:flex;align-items:center;justify-content:center;max-height:440px}
@@ -96,7 +102,7 @@ label{display:block;font-size:14px;color:var(--muted);margin-bottom:3px}
 .in{width:100%;height:46px;padding:0 12px;background:var(--field);border:1.5px solid var(--line);border-radius:10px}
 textarea.in{height:68px;padding:8px 12px;resize:vertical}
 .photo-row{display:flex;gap:12px;align-items:center}
-.prev{width:84px;height:112px;border-radius:10px;background:var(--tint);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center}
+.prev{width:84px;height:112px;border-radius:10px;background:var(--tint);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;flex:none}
 .prev img{width:100%;height:100%;object-fit:cover}
 .xchips{display:flex;flex-wrap:wrap;gap:8px}
 .xchip{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:5px 14px;cursor:pointer}
@@ -108,43 +114,60 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
 #toast{position:fixed;bottom:18px;inset-inline:16px;margin:auto;max-width:420px;background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:10px;z-index:20;text-align:center}
 @media (max-width:420px){.gridf{grid-template-columns:1fr}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<div class="wrap">
-  <div class="head">
-    <div>
-      <h1>فساتين المحل</h1>
-      <p class="sub" id="todayLine"></p>
-    </div>
-    <button class="btn primary" id="addDress">فستان جديد</button>
-  </div>
 
-  <div id="demoBanner" class="demo" hidden>
-    <span>هذه بيانات تجريبية للعرض فقط.</span>
-    <button class="btn" id="clearDemo">ابدأ بسجل فارغ</button>
-  </div>
-
-  <input id="q" type="search" placeholder="ابحث باسم الفستان أو اسم الزبون" autocomplete="off" aria-label="بحث">
-  <div class="chips" id="chips"></div>
-  <div id="list"></div>
-
-  <div class="foot">
-    <div class="row">
-      <button class="btn" id="export">حفظ نسخة احتياطية</button>
-      <button class="btn" id="importBtn">استرجاع نسخة</button>
-      <input type="file" id="importFile" accept="application/json" hidden>
-    </div>
-    <div id="storageHint" hidden>البيانات هنا محفوظة في الذاكرة المؤقتة للصفحة فقط. احفظ نسخة احتياطية قبل الإغلاق.</div>
-  </div>
+<div id="login" hidden>
+  <form class="login-card" id="loginForm" autocomplete="on">
+    <h1>فساتين المحل</h1>
+    <p class="sub">سجّل الدخول لإدارة الفساتين والكراء.</p>
+    <p id="loginMsg" role="alert" hidden></p>
+    <label for="lEmail">البريد الإلكتروني</label>
+    <input class="in" id="lEmail" type="email" inputmode="email" autocomplete="username" dir="ltr" style="text-align:right">
+    <label for="lPass">كلمة السر</label>
+    <input class="in" id="lPass" type="password" autocomplete="current-password" dir="ltr" style="text-align:right">
+    <button class="btn primary" id="lBtn" type="submit">دخول</button>
+  </form>
 </div>
 
-<div id="sheet" hidden><div class="sheet-in" id="sheetBody"></div></div>
-<datalist id="customersList"></datalist>
+<div id="app" hidden>
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <h1>فساتين المحل</h1>
+        <p class="sub" id="todayLine"></p>
+      </div>
+      <button class="btn primary" id="addDress">فستان جديد</button>
+    </div>
+
+    <input id="q" type="search" placeholder="ابحث باسم الفستان أو اسم الزبون" autocomplete="off" aria-label="بحث">
+    <div class="chips" id="chips"></div>
+    <div id="list"></div>
+
+    <div class="foot">
+      <div class="row">
+        <button class="btn" id="refreshBtn">تحديث</button>
+        <button class="btn" id="export">نسخة احتياطية</button>
+        <button class="btn" id="logout">تسجيل الخروج</button>
+      </div>
+      <div id="who"></div>
+    </div>
+  </div>
+
+  <div id="sheet" hidden><div class="sheet-in" id="sheetBody"></div></div>
+  <datalist id="customersList"></datalist>
+  <input type="file" id="dPhotoFile" accept="image/*" hidden>
+</div>
 <div id="toast" hidden></div>
-<input type="file" id="dPhotoFile" accept="image/*" hidden>
 
 <script>
 (() => {
+  const SUPABASE_URL = 'https://uijpzbrgxsecvbcwmtjf.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_03LUekqnN_BewbXVE1s-QA_8lwyCNCI';
+  const BUCKET = 'dress-photos';
+  const DEFAULT_EXTRAS = ['باقة ورود', 'تاج', 'طرحة', 'حذاء', 'مجوهرات', 'أكسسوارات'];
+
   const $ = s => document.querySelector(s);
   const MONTHS = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   const pad = n => String(n).padStart(2, '0');
@@ -152,11 +175,9 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
   const today = () => iso(new Date());
   const toDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
   const dayDiff = (a, b) => Math.round((toDate(b) - toDate(a)) / 864e5);
-  const addDays = (s, n) => { const d = toDate(s); d.setDate(d.getDate() + n); return iso(d); };
   const fmt = s => { const d = toDate(s); return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; };
   const money = n => String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const daysWord = n => n === 1 ? 'يوم واحد' : n === 2 ? 'يومان' : n <= 10 ? `${n} أيام` : `${n} يومًا`;
   const norm = s => (s || '').toLowerCase()
     .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
@@ -165,21 +186,43 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     .replace(/\s+/g, ' ').trim();
 
   const LABEL = { free: 'متاح', rented: 'مؤجَّر', late: 'متأخر' };
-  const DEFAULT_EXTRAS = ['باقة ورود', 'تاج', 'طرحة', 'حذاء', 'مجوهرات', 'أكسسوارات'];
-  let db = { dresses: [], rentals: [], extras: [...DEFAULT_EXTRAS] };
-  let filter = 'all', view = null, ack = false, photoData = '', extrasSel = [];
-  const xchipsHtml = () => [...new Set([...db.extras, ...extrasSel])]
-    .map(x => `<button type="button" class="xchip" data-act="toggleX" data-x="${esc(x)}" aria-pressed="${extrasSel.includes(x)}">${esc(x)}</button>`).join('');
+  let sb = null;
+  let db = { dresses: [], rentals: [] };
+  let filter = 'all', view = null, ack = false, busy = false, extrasSel = [];
+  let photo = { url: '', blob: null, preview: '' };
 
-  // ---------- التخزين ----------
-  const hasStore = typeof window.storage !== 'undefined';
-  async function load() { try { const r = await window.storage.get('shop'); return JSON.parse(r.value); } catch (e) { return null; } }
-  async function persist() {
-    try { await window.storage.set('shop', JSON.stringify(db)); }
-    catch (e) { if (hasStore) toast('تعذّر الحفظ. احفظ نسخة احتياطية الآن.'); }
-  }
+  // ---------- أدوات عامة ----------
   let toastTimer;
-  function toast(t) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 3500); }
+  function toast(t) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 4000); }
+  function errText(e) {
+    const m = String((e && e.message) || e || '');
+    if (/failed to fetch|network|load failed/i.test(m)) return 'تعذّر الاتصال بالإنترنت. حاول مرة أخرى.';
+    if (/jwt|not authenticated|401/i.test(m)) return 'انتهت الجلسة. سجّل الدخول من جديد.';
+    return 'حدث خطأ: ' + m.slice(0, 90);
+  }
+  async function run(fn) {
+    if (busy) return;
+    busy = true; document.body.classList.add('busy');
+    try { await fn(); }
+    catch (e) { console.error(e); toast(errText(e)); }
+    finally { busy = false; document.body.classList.remove('busy'); }
+  }
+
+  // ---------- تحويل الحقول بين قاعدة البيانات والواجهة ----------
+  const fromDress = r => ({ id: r.id, name: r.name, code: r.code || '', color: r.color || '', size: r.size || '', price: r.price || 0, note: r.note || '', photo: r.photo_url || '' });
+  const fromRental = r => ({ id: r.id, dressId: r.dress_id, customer: r.customer, phone: r.phone || '', start: r.start_date, end: r.end_date,
+    price: r.price || 0, deposit: r.deposit || 0, returned: !!r.returned, extras: Array.isArray(r.extras) ? r.extras : [], note: r.note || '' });
+
+  async function reload() {
+    const [d, r] = await Promise.all([
+      sb.from('dresses').select('*').order('created_at', { ascending: true }).limit(5000),
+      sb.from('rentals').select('*').order('start_date', { ascending: true }).limit(5000)
+    ]);
+    if (d.error) throw d.error;
+    if (r.error) throw r.error;
+    db.dresses = d.data.map(fromDress);
+    db.rentals = r.data.map(fromRental);
+  }
 
   // ---------- المنطق ----------
   function rentalState(r) {
@@ -199,6 +242,9 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
   }
   const RANK = { late: 0, rented: 1, free: 2 };
   const PR = { late: 0, current: 1, upcoming: 2, done: 3 };
+  const allExtras = () => [...new Set([...DEFAULT_EXTRAS, ...db.rentals.flatMap(r => r.extras || []), ...extrasSel])];
+  const xchipsHtml = () => allExtras().map(x =>
+    `<button type="button" class="xchip" data-act="toggleX" data-x="${esc(x)}" aria-pressed="${extrasSel.includes(x)}">${esc(x)}</button>`).join('');
 
   function rentBlock(r, cap) {
     const st = rentalState(r), t = today();
@@ -222,7 +268,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     const rem = r.price - (r.deposit || 0);
     return `<p class="money">السعر ${money(r.price)} دج، العربون ${money(r.deposit)} دج، ${rem > 0 ? `المتبقي ${money(rem)} دج` : 'مدفوع بالكامل'}</p>`;
   }
-  const photoHtml = d => d.photo ? `<img src="${d.photo}" alt="${esc(d.name)}">` : `<span class="ini">${esc([...d.name][0] || '؟')}</span>`;
+  const photoHtml = d => d.photo ? `<img src="${esc(d.photo)}" alt="${esc(d.name)}" loading="lazy">` : `<span class="ini">${esc([...d.name][0] || '؟')}</span>`;
 
   function focusRental(i, q) {
     if (q) {
@@ -244,7 +290,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     $('#chips').innerHTML = [['all', 'الكل'], ['free', 'متاح'], ['rented', 'مؤجَّر'], ['late', 'متأخر']]
       .map(([k, l]) => `<button class="chip" data-f="${k}" aria-pressed="${filter === k}">${l}<b>${counts[k]}</b></button>`).join('');
 
-    let list = all.filter(({ d, i }) => {
+    const list = all.filter(({ d, i }) => {
       if (filter !== 'all' && i.key !== filter) return false;
       if (!q) return true;
       const hay = [d.name, d.code, d.color].map(norm).join(' ');
@@ -260,13 +306,12 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
       $('#list').innerHTML = `<div class="grid">${list.map(({ d, i }) => {
         const f = focusRental(i, q);
         const body = f ? rentBlock(f.r, f.cap) : `<div class="note free">جاهز للكراء</div>`;
-        return `<article class="dcard ${i.key}" tabindex="0" role="button" data-id="${d.id}" aria-label="${esc(d.name)}">
+        return `<article class="dcard ${i.key}" tabindex="0" role="button" data-id="${esc(d.id)}" aria-label="${esc(d.name)}">
           <div class="ph">${photoHtml(d)}<span class="pill ${i.key}">${LABEL[i.key]}</span></div>
           <div class="dbody"><div class="dname">${esc(d.name)}</div>${body}</div></article>`;
       }).join('')}</div>`;
     }
     $('#customersList').innerHTML = [...new Set(db.rentals.map(r => r.customer))].map(v => `<option value="${esc(v)}">`).join('');
-    $('#demoBanner').hidden = !(db.dresses.some(d => d.demo));
   }
 
   // ---------- الشاشة التفصيلية ----------
@@ -278,16 +323,16 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     let st;
     if (i.active) {
       st = `<div class="panel"><span class="pill ${i.key}">${LABEL[i.key]}</span>${rentBlock(i.active)}${rentMoney(i.active)}
-        <div class="acts"><button class="btn primary" data-act="ret" data-id="${i.active.id}">تم إرجاع الفستان</button></div></div>`;
+        <div class="acts"><button class="btn primary" data-act="ret" data-id="${esc(i.active.id)}">تم إرجاع الفستان</button></div></div>`;
     } else {
       st = `<div class="panel"><span class="pill free">متاح</span><p class="note free">الفستان متاح الآن للكراء.</p></div>`;
     }
     if (i.next) st += `<div class="panel">${rentBlock(i.next, 'الحجز القادم')}${rentMoney(i.next)}</div>`;
     const hist = [...i.rs].sort((a, b) => b.start.localeCompare(a.start)).map(r => `<div class="hist">${rentBlock(r)}${rentMoney(r)}${r.note ? `<p class="money">${esc(r.note)}</p>` : ''}
       <div class="acts">
-        ${r.returned ? `<button class="btn" data-act="unret" data-id="${r.id}">إلغاء الإرجاع</button>` : `<button class="btn" data-act="ret" data-id="${r.id}">تم الإرجاع</button>`}
-        <button class="btn" data-act="editRental" data-id="${r.id}">تعديل</button>
-        <button class="btn danger" data-act="delRental" data-id="${r.id}">حذف</button></div></div>`).join('');
+        ${r.returned ? `<button class="btn" data-act="unret" data-id="${esc(r.id)}">إلغاء الإرجاع</button>` : `<button class="btn" data-act="ret" data-id="${esc(r.id)}">تم الإرجاع</button>`}
+        <button class="btn" data-act="editRental" data-id="${esc(r.id)}">تعديل</button>
+        <button class="btn danger" data-act="delRental" data-id="${esc(r.id)}">حذف</button></div></div>`).join('');
     return `<button class="btn" data-act="close">رجوع</button>
       <div class="hero">${photoHtml(d)}</div>
       <h2>${esc(d.name)}</h2>
@@ -304,7 +349,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
 
   function dformHtml() {
     const d = view.id ? db.dresses.find(x => x.id === view.id) : {};
-    photoData = d.photo || '';
+    photo = { url: d.photo || '', blob: null, preview: d.photo || '' };
     return `<button class="btn" data-act="back">رجوع</button>
       <h2 style="margin:14px 0">${view.id ? 'تعديل الفستان' : 'فستان جديد'}</h2>
       <div class="gridf">
@@ -314,7 +359,7 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
         <div><label for="dSize">المقاس</label><input class="in" id="dSize" value="${esc(d.size)}"></div>
         <div><label for="dPrice">سعر الكراء المعتاد (دج)</label><input class="in" id="dPrice" type="number" inputmode="numeric" min="0" value="${d.price || ''}"></div>
         <div class="full"><label>الصورة</label>
-          <div class="photo-row"><div class="prev" id="prev">${photoData ? `<img src="${photoData}" alt="">` : 'بلا صورة'}</div>
+          <div class="photo-row"><div class="prev" id="prev">${photo.preview ? `<img src="${esc(photo.preview)}" alt="">` : 'بلا صورة'}</div>
             <div><button class="btn" data-act="pickPhoto">اختيار صورة</button> <button class="btn link" data-act="rmPhoto">إزالة</button></div></div></div>
         <div class="full"><label for="dNote">ملاحظة</label><textarea class="in" id="dNote">${esc(d.note)}</textarea></div>
       </div>
@@ -359,22 +404,65 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
   const showMsg = t => { const m = $('#formMsg'); m.textContent = t; m.hidden = false; };
   const val = id => $(id).value.trim();
 
+  // ---------- الصور ----------
+  function resizeImage(file, max = 900) {
+    return new Promise((res, rej) => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(b => b ? res(b) : rej(new Error('تعذّر معالجة الصورة')), 'image/jpeg', 0.82);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('تعذّر قراءة الصورة')); };
+      img.src = url;
+    });
+  }
+  async function uploadPhoto(blob) {
+    const name = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)) + '.jpg';
+    const { error } = await sb.storage.from(BUCKET).upload(name, blob, { contentType: 'image/jpeg', cacheControl: '31536000' });
+    if (error) throw error;
+    return sb.storage.from(BUCKET).getPublicUrl(name).data.publicUrl;
+  }
+  async function removePhoto(url) {
+    const m = /\/dress-photos\/([^?]+)/.exec(url || '');
+    if (!m) return;
+    try { await sb.storage.from(BUCKET).remove([decodeURIComponent(m[1])]); } catch (_) {}
+  }
+
   // ---------- حفظ النماذج ----------
   async function saveDress() {
     const name = val('#dName');
     if (!name) return showMsg('اكتب اسم الفستان.');
-    const o = { name, code: val('#dCode'), color: val('#dColor'), size: val('#dSize'), price: Number($('#dPrice').value) || 0, note: val('#dNote'), photo: photoData };
-    let id = view.id;
-    if (id) Object.assign(db.dresses.find(x => x.id === id), o);
-    else { id = uid(); db.dresses.push({ id, ...o }); }
-    await persist();
-    view = { t: 'detail', id };
-    refresh();
+    const fields = { name, code: val('#dCode') || null, color: val('#dColor') || null, size: val('#dSize') || null,
+      price: Number($('#dPrice').value) || 0, note: val('#dNote') || null };
+    await run(async () => {
+      const old = view.id ? db.dresses.find(x => x.id === view.id) : null;
+      const oldUrl = old ? old.photo : '';
+      let url = photo.url;
+      if (photo.blob) url = await uploadPhoto(photo.blob);
+      fields.photo_url = url || null;
+      let id = view.id;
+      if (id) {
+        const { error } = await sb.from('dresses').update(fields).eq('id', id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await sb.from('dresses').insert(fields).select('id').single();
+        if (error) throw error;
+        id = data.id;
+      }
+      if (oldUrl && oldUrl !== url) await removePhoto(oldUrl);
+      await reload();
+      view = { t: 'detail', id };
+      refresh();
+    });
   }
 
   async function saveRental() {
     const o = { customer: val('#rCustomer'), phone: val('#rPhone'), start: $('#rStart').value, end: $('#rEnd').value,
-      price: Number($('#rPrice').value) || 0, deposit: Number($('#rDeposit').value) || 0, note: val('#rNote'), extras: [...extrasSel] };
+      price: Number($('#rPrice').value) || 0, deposit: Number($('#rDeposit').value) || 0, note: val('#rNote') };
     if (!o.customer) return showMsg('اكتب اسم الزبون.');
     if (!o.start || !o.end) return showMsg('اختر يوم الاستلام ويوم الإرجاع.');
     if (o.end < o.start) return showMsg('يوم الإرجاع يجب أن يكون بعد يوم الاستلام أو يساويه.');
@@ -386,27 +474,24 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
       $('#saveR').textContent = 'حفظ رغم التعارض';
       return;
     }
-    if (view.id) Object.assign(db.rentals.find(x => x.id === view.id), o);
-    else db.rentals.push({ id: uid(), dressId: view.dressId, returned: false, ...o });
-    await persist();
-    view = { t: 'detail', id: view.dressId };
-    refresh();
+    await run(async () => {
+      const did = view.dressId, rid = view.id;
+      const row = { dress_id: did, customer: o.customer, phone: o.phone || null, start_date: o.start, end_date: o.end,
+        price: o.price, deposit: o.deposit, note: o.note || null, extras: [...extrasSel] };
+      const { error } = rid ? await sb.from('rentals').update(row).eq('id', rid) : await sb.from('rentals').insert(row);
+      if (error) throw error;
+      await reload();
+      view = { t: 'detail', id: did };
+      refresh();
+    });
   }
 
-  function resizeImage(file, max = 420) {
-    return new Promise((res, rej) => {
-      const img = new Image(), url = URL.createObjectURL(file);
-      img.onload = () => {
-        const k = Math.min(1, max / Math.max(img.width, img.height));
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        URL.revokeObjectURL(url);
-        res(c.toDataURL('image/jpeg', 0.72));
-      };
-      img.onerror = rej;
-      img.src = url;
-    });
+  function addExtra() {
+    const inp = $('#xNew'), v = inp.value.trim();
+    if (!v) return;
+    if (!extrasSel.includes(v)) extrasSel.push(v);
+    inp.value = '';
+    $('#xchips').innerHTML = xchipsHtml();
   }
 
   function armDelete(b, fn) {
@@ -427,19 +512,19 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const c = e.target.closest('.dcard'); if (c) { e.preventDefault(); view = { t: 'detail', id: c.dataset.id }; renderSheet(); }
   });
-  $('#clearDemo').addEventListener('click', async () => {
-    const ids = new Set(db.dresses.filter(d => d.demo).map(d => d.id));
-    db.dresses = db.dresses.filter(d => !ids.has(d.id));
-    db.rentals = db.rentals.filter(r => !ids.has(r.dressId));
-    await persist(); render();
-  });
 
-  $('#sheet').addEventListener('input', () => { if (ack) { ack = false; const b = $('#saveR'); if (b) b.textContent = 'حفظ الكراء'; $('#formMsg').hidden = true; } });
+  $('#sheet').addEventListener('input', () => { if (ack) { ack = false; const b = $('#saveR'); if (b) b.textContent = 'حفظ الكراء'; const m = $('#formMsg'); if (m) m.hidden = true; } });
+  $('#sheet').addEventListener('keydown', e => { if (e.target.id === 'xNew' && e.key === 'Enter') { e.preventDefault(); addExtra(); } });
+
   $('#dPhotoFile').addEventListener('change', async e => {
     const f = e.target.files[0]; e.target.value = '';
     if (!f) return;
-    try { photoData = await resizeImage(f); const p = $('#prev'); if (p) p.innerHTML = `<img src="${photoData}" alt="">`; }
-    catch (_) { toast('تعذّر قراءة الصورة.'); }
+    try {
+      const blob = await resizeImage(f);
+      if (photo.blob) URL.revokeObjectURL(photo.preview);
+      photo.blob = blob; photo.preview = URL.createObjectURL(blob);
+      const p = $('#prev'); if (p) p.innerHTML = `<img src="${photo.preview}" alt="">`;
+    } catch (err) { toast(errText(err)); }
   });
 
   $('#sheet').addEventListener('click', async e => {
@@ -454,7 +539,11 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     if (act === 'editRental') { view = { t: 'rform', dressId: view.id, id }; return renderSheet(); }
     if (act === 'editDress') { view = { t: 'dform', id: view.id }; return renderSheet(); }
     if (act === 'pickPhoto') return $('#dPhotoFile').click();
-    if (act === 'rmPhoto') { photoData = ''; $('#prev').textContent = 'بلا صورة'; return; }
+    if (act === 'rmPhoto') {
+      if (photo.blob) URL.revokeObjectURL(photo.preview);
+      photo = { url: '', blob: null, preview: '' };
+      $('#prev').textContent = 'بلا صورة'; return;
+    }
     if (act === 'toggleX') {
       const x = b.dataset.x;
       extrasSel = extrasSel.includes(x) ? extrasSel.filter(s => s !== x) : [...extrasSel, x];
@@ -464,83 +553,84 @@ textarea.in{height:68px;padding:8px 12px;resize:vertical}
     if (act === 'saveDress') return saveDress();
     if (act === 'saveRental') return saveRental();
     if (act === 'ret' || act === 'unret') {
-      db.rentals.find(r => r.id === id).returned = act === 'ret'; await persist(); return refresh(true);
+      return run(async () => {
+        const { error } = await sb.from('rentals').update({ returned: act === 'ret' }).eq('id', id);
+        if (error) throw error;
+        await reload(); refresh(true);
+      });
     }
-    if (act === 'delRental') return armDelete(b, async () => { db.rentals = db.rentals.filter(r => r.id !== id); await persist(); refresh(true); });
-    if (act === 'delDress') return armDelete(b, async () => {
-      const did = view.id;
-      db.dresses = db.dresses.filter(d => d.id !== did); db.rentals = db.rentals.filter(r => r.dressId !== did);
-      await persist(); view = null; refresh();
-    });
+    if (act === 'delRental') return armDelete(b, () => run(async () => {
+      const { error } = await sb.from('rentals').delete().eq('id', id);
+      if (error) throw error;
+      await reload(); refresh(true);
+    }));
+    if (act === 'delDress') return armDelete(b, () => run(async () => {
+      const did = view.id, d = db.dresses.find(x => x.id === did);
+      const { error } = await sb.from('dresses').delete().eq('id', did);
+      if (error) throw error;
+      if (d && d.photo) await removePhoto(d.photo);
+      await reload(); view = null; refresh();
+    }));
   });
 
-  function addExtra() {
-    const inp = $('#xNew'), v = inp.value.trim();
-    if (!v) return;
-    if (!db.extras.includes(v)) db.extras.push(v);
-    if (!extrasSel.includes(v)) extrasSel.push(v);
-    inp.value = '';
-    $('#xchips').innerHTML = xchipsHtml();
-    persist();
-  }
-  $('#sheet').addEventListener('keydown', e => {
-    if (e.target.id === 'xNew' && e.key === 'Enter') { e.preventDefault(); addExtra(); }
-  });
-
+  $('#refreshBtn').addEventListener('click', () => run(async () => { await reload(); refresh(true); toast('تم التحديث.'); }));
   $('#export').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(db)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = `dresses-backup-${today()}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
-  $('#importBtn').addEventListener('click', () => $('#importFile').click());
-  $('#importFile').addEventListener('change', e => {
-    const file = e.target.files[0]; e.target.value = '';
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = async () => {
-      try {
-        const data = JSON.parse(r.result);
-        const okDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
-        if (!Array.isArray(data.dresses) || !Array.isArray(data.rentals)) throw 0;
-        if (!data.dresses.every(d => d.id && d.name)) throw 0;
-        if (!data.rentals.every(x => x.id && x.dressId && x.customer && okDate(x.start) && okDate(x.end))) throw 0;
-        data.dresses.forEach(d => { if (!(typeof d.photo === 'string' && d.photo.startsWith('data:image/'))) d.photo = ''; });
-        data.rentals.forEach(x => { x.extras = Array.isArray(x.extras) ? x.extras.filter(s => typeof s === 'string') : []; });
-        data.extras = Array.isArray(data.extras) ? data.extras.filter(s => typeof s === 'string') : [...DEFAULT_EXTRAS];
-        db = data; await persist(); view = null; refresh();
-        toast('تم استرجاع النسخة.');
-      } catch (_) { toast('الملف غير صالح.'); }
-    };
-    r.readAsText(file);
+  $('#logout').addEventListener('click', async () => { try { await sb.auth.signOut(); } catch (_) {} showLogin(); });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || busy || $('#app').hidden) return;
+    if (view && view.t !== 'detail') return;
+    reload().then(() => refresh(true)).catch(() => {});
   });
 
-  function demo() {
-    const t = today();
-    const mk = (name, code, color, size, price) => ({ id: uid(), name, code, color, size, price, note: '', photo: '', demo: true });
-    const a = mk('ملكي عاجي', '01', 'عاجي', '40', 45000), b = mk('دانتيل وردي', '02', 'وردي', '38', 38000),
-      c = mk('سيرين أزرق', '03', 'أزرق', '42', 30000), d = mk('أميرة بيضاء', '04', 'أبيض', '40', 50000),
-      e = mk('ساتان كلاسيك', '05', 'شمباني', '44', 35000), f = mk('سهرة أحمر', '06', 'أحمر', '38', 28000);
-    const r = (dr, customer, phone, s, en, price, dep, returned = false, extras = []) =>
-      ({ id: uid(), dressId: dr.id, customer, phone, start: addDays(t, s), end: addDays(t, en), price, deposit: dep, note: '', returned, extras, demo: true });
-    return { extras: [...DEFAULT_EXTRAS], dresses: [a, b, c, d, e, f], rentals: [
-      r(a, 'سميرة بن عيسى', '0555 12 34 56', -1, 2, 45000, 15000, false, ['باقة ورود', 'تاج']),
-      r(a, 'ليلى قاسمي', '0550 00 11 22', 8, 11, 45000, 10000, false, ['طرحة']),
-      r(b, 'نور الهدى مرزوق', '0661 98 76 54', 6, 9, 38000, 10000, false, ['باقة ورود', 'مجوهرات']),
-      r(c, 'أمينة بوزيد', '0770 11 22 33', -6, -3, 30000, 30000),
-      r(d, 'وفاء شريف', '0560 44 55 66', -20, -17, 50000, 50000, true)
-    ] };
+  // ---------- الدخول ----------
+  const loginMsg = t => { const m = $('#loginMsg'); m.textContent = t; m.hidden = !t; };
+  function showLogin() {
+    db = { dresses: [], rentals: [] }; view = null;
+    $('#app').hidden = true; $('#login').hidden = false; document.body.style.overflow = '';
+    $('#sheet').hidden = true;
   }
+  async function enter() {
+    $('#login').hidden = true; $('#app').hidden = false;
+    try {
+      const { data } = await sb.auth.getSession();
+      $('#who').textContent = data.session && data.session.user ? `مسجّل الدخول: ${data.session.user.email}` : '';
+      await reload();
+    } catch (e) { toast(errText(e)); }
+    render();
+  }
+  $('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = $('#lEmail').value.trim(), password = $('#lPass').value;
+    if (!email || !password) return loginMsg('اكتب البريد الإلكتروني وكلمة السر.');
+    loginMsg('');
+    $('#lBtn').disabled = true;
+    try {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) loginMsg(/network|fetch/i.test(error.message) ? 'تعذّر الاتصال بالإنترنت.' : 'البريد أو كلمة السر غير صحيحة.');
+      else { $('#lPass').value = ''; await enter(); }
+    } catch (_) { loginMsg('تعذّر الاتصال بالإنترنت.'); }
+    finally { $('#lBtn').disabled = false; }
+  });
 
   (async () => {
-    const saved = await load();
-    if (saved && Array.isArray(saved.dresses) && Array.isArray(saved.rentals)) {
-      db = saved;
-      if (!Array.isArray(db.extras)) db.extras = [...DEFAULT_EXTRAS];
+    if (typeof supabase === 'undefined') {
+      $('#login').hidden = false;
+      loginMsg('تعذّر تحميل مكتبة الاتصال. تحقق من الإنترنت ثم أعد فتح الصفحة.');
+      $('#lBtn').disabled = true;
+      return;
     }
-    else { db = demo(); await persist(); }
-    $('#storageHint').hidden = hasStore;
-    render();
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') showLogin(); });
+    try {
+      const { data } = await sb.auth.getSession();
+      if (data.session) await enter(); else showLogin();
+    } catch (_) { showLogin(); }
   })();
 })();
 </script>
